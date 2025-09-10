@@ -1,4 +1,4 @@
-import os
+import os,sys
 import time
 
 import click
@@ -25,6 +25,8 @@ def cli():
 def fly(interval, fish):
     watch_list = config_parser.get_watch_list()
     code_list = list(map(lambda s: s['QuoteID'], watch_list))
+    sys.stdout.write("\033[F\033[K")
+    sys.stdout.flush()
 
     if len(code_list) == 0:
         print("There are no stock in watch list, please add first!")
@@ -36,21 +38,25 @@ def fly(interval, fish):
 
         # 格式化打印
         x = PrettyTable(['name', 'code', 'price', 'percent'])
+        x = PrettyTable(['name', 'P', '%'])
         x.align = 'r'
         for stock in stocks:
             name = stock['f14']
-            code = stock['f12']
+            #code = stock['f12']
             pre_price = stock['f18']
             price = stock['f2']
             percent = (price - pre_price) / pre_price * 100
+            result = pinyin.get(name, format="strip", delimiter=" ")
+            abbr = "".join(word[0].upper() for word in result.split())
 
             if fish:
-                x.add_row([pinyin.get(name, format="strip"), code, price / 100, f'{percent:.2f}%'])
+                #x.add_row([pinyin.get(name, format="strip"), code, price / 100, f'{percent:.2f}%'])
+                x.add_row([abbr, price / 100, f'{percent:.2f}%'])
             else:
                 if percent < 0:
-                    x.add_row([name, code, price / 100, f'\033[32m{percent:.2f}%\033[0m'])
+                    x.add_row([name, price / 100, f'\033[32m{percent:.2f}%\033[0m'])
                 else:
-                    x.add_row([name, code, price / 100, f'\033[31m{percent:.2f}%\033[0m'])
+                    x.add_row([name, price / 100, f'\033[31m{percent:.2f}%\033[0m'])
 
         br_count = pre_table.count('\n', 0, len(pre_table))
 
