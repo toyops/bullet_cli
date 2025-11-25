@@ -1,17 +1,70 @@
-import requests
+"""
+网络API模块 - 使用腾讯股票API获取股票数据
+"""
+from ..tencent_stock import TencentStockAPI, Stock
 
 
 def get_bullets_value(stock_code_list):
-    id_list_str = ",".join(stock_code_list)
-    r = requests.get(
-        f'https://push2.eastmoney.com/api/qt/ulist.np/get?fields=f1,f14,f2,f12,f5,f18,f4&secids={id_list_str}')
-    stocks = r.json()['data']['diff']
-    return stocks
+    """
+    获取股票实时数据
+    
+    Args:
+        stock_code_list: 股票代码列表，统一格式如 ['SH600000', 'SZ000001']
+        
+    Returns:
+        股票数据列表，保持与旧API兼容的字典格式
+        [{
+            'f14': 股票名称,
+            'f2': 现价*100 (整数),
+            'f18': 昨收价*100 (整数)
+        }]
+    """
+    stocks = TencentStockAPI.get_stocks(stock_code_list)
+    
+    # 转换为旧格式以保持兼容性
+    result = []
+    for stock in stocks:
+        result.append({
+            'f14': stock.name,
+            'f2': int(stock.now * 100),  # 现价转为分
+            'f18': int(stock.yesterday * 100),  # 昨收价转为分
+        })
+    
+    return result
 
 
 def search_bullets(name):
-    r = requests.get(
-        f'https://searchapi.eastmoney.com/api/suggest/get?input={name}&type=14&token=D43BF722C8E33BDC906FB84D85E326E8&count=20&_=1678947038546')
-
-    stocks = r.json()['QuotationCodeTable']['Data']
-    return stocks
+    """
+    搜索股票
+    
+    Args:
+        name: 搜索关键字
+        
+    Returns:
+        股票列表，保持与旧API兼容的字典格式
+        [{
+            'Name': 股票名称,
+            'Code': 股票代码(不含交易所前缀),
+            'QuoteID': 统一格式代码(如SH600000)
+        }]
+    """
+    stocks = TencentStockAPI.search_stocks(name)
+    
+    # 转换为旧格式以保持兼容性
+    result = []
+    for stock in stocks:
+        # 从统一代码中提取交易所和代码
+        # 如 SH600000 -> code=600000, QuoteID=SH600000
+        code = stock.code
+        if len(code) > 2:
+            stock_code = code[2:]  # 去掉前缀如SH, SZ
+        else:
+            stock_code = code
+            
+        result.append({
+            'Name': stock.name,
+            'Code': stock_code,
+            'QuoteID': stock.code,  # 保存统一格式代码
+        })
+    
+    return result

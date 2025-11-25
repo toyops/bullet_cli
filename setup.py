@@ -14,13 +14,14 @@ def _process_requirements():
 
 setup(
     name='bullet_cli',
-    version='0.0.1',
-    author="monkeyliu",
-    author_email="mrlmj@qq.com",
+    version='0.0.2',
+    author="toyops",
+    author_email="volqiu@live.com",
     description='watch stock in Terminal',
     install_requires=_process_requirements(),
     packages=find_packages('src'),
     package_dir={'': 'src'},
+    py_modules=['bullet_cli.tencent_stock'],  # 包含 tencent_stock 模块
     include_package_data=True,
     entry_points={
         'console_scripts': [
